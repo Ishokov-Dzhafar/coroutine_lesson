@@ -1,3 +1,4 @@
 <resources>
-    <string name="app_name">coroutine_lesson</string>
+    <string name="app_name">FactCat</string>
+    <string name="more">Еще</string>
 </resources>
