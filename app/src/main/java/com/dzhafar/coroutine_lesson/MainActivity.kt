@@ -13,63 +13,62 @@ import androidx.core.view.marginBottom
 import androidx.core.view.marginTop
 import kotlinx.android.synthetic.main.activity_main.*
 import kotlinx.coroutines.*
+import retrofit2.Response
 
 class MainActivity : AppCompatActivity() {
 
-    private var myJob: Job? = null
+    val supervisorJob = SupervisorJob()
+    val coroutineScope = CoroutineScope(Dispatchers.IO + supervisorJob)
     private var repo = FactRepository()
-    lateinit var factLayout: LinearLayout
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        factLayout = this.findViewById(R.id.factLayout)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        loadFacts()
         loadMore.setOnClickListener {
-            myJob?.cancel()
+            supervisorJob.cancelChildren()
             loadFacts()
         }
+        loadFacts()
     }
 
-    fun loadFacts() {
-        myJob = CoroutineScope(Dispatchers.IO).launch {
+    private fun loadFacts() {
+        coroutineScope.launch {
             val response = repo.fetchRandomFacts("cat", 3)
-            if(response.isSuccessful && response.body() != null) {
-                val result = response.body()!!
-                result.forEach {
-                    Log.d("RESULT", it.text)
-                }
-                withContext(Dispatchers.Main) {
-                    result.forEach {
-                        val textView = TextView(factLayout.context)
-                        textView.layoutParams = ViewGroup.LayoutParams(
-                            ViewGroup.LayoutParams.WRAP_CONTENT,
-                            ViewGroup.LayoutParams.WRAP_CONTENT
-                        )
-                        val margin = textView.layoutParams as ViewGroup.MarginLayoutParams
-                        margin.bottomMargin = 16
-                        textView.text = it.text
-                        factLayout.addView(textView)
-                    }
-                }
-            } else {
-                withContext(Dispatchers.Main) {
-                    Toast.makeText(
-                        factLayout.context,
-                        "Что-то пошло не так ${response.code()}",
-                        Toast.LENGTH_LONG
-                    ).show()
+            withContext(Dispatchers.Main) {
+                if (response.isSuccessful && response.body() != null) {
+                    val result = response.body()!!
+                    showContent(result)
+                } else {
+                    showError(response)
                 }
             }
         }
     }
 
+    private fun showContent(result: List<FactRes>) {
+        result.forEach {
+            val textView = TextView(this@MainActivity)
+            val layoutParams = LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.WRAP_CONTENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+            )
+            layoutParams.setMargins(16, 0, 16, 16)
+            textView.text = it.text
+            factLayout.addView(textView, layoutParams)
+        }
+    }
+
+    private fun showError(response: Response<List<FactRes>>) {
+        Toast.makeText(
+            factLayout.context,
+            "Что-то пошло не так ${response.code()}",
+            Toast.LENGTH_LONG
+        ).show()
+    }
+
     override fun onDestroy() {
-        myJob?.cancel()
         super.onDestroy()
+        supervisorJob.cancel()
     }
 }

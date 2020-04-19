@@ -19,25 +19,8 @@ interface RestApi {
 
 
 data class FactRes(
-
-    @SerializedName("used") val used: Boolean,
-    @SerializedName("source") val source: String,
-    @SerializedName("type") val type: String,
-    @SerializedName("deleted") val deleted: Boolean,
-    @SerializedName("_id") val _id: String,
-    @SerializedName("__v") val __v: Int,
-    @SerializedName("text") val text: String,
-    @SerializedName("updatedAt") val updatedAt: String,
-    @SerializedName("createdAt") val createdAt: String,
-    @SerializedName("status") val status: Status,
-    @SerializedName("user") val user: String
-) : Serializable
-
-
-data class Status(
-
-    @SerializedName("verified") val verified: Boolean,
-    @SerializedName("sentCount") val sentCount: Int
+    @SerializedName("_id") val id: String,
+    @SerializedName("text") val text: String
 ) : Serializable
 
 class FactRepository {
